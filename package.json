@@ -1,0 +1,15 @@
+{
+  "name": "drishti-stitch-export",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch:stitch": "node scripts/fetch_stitch_assets.mjs",
+    "client:install": "npm --prefix client install",
+    "client:dev": "npm --prefix client run dev",
+    "client:build": "npm --prefix client run build",
+    "client:start": "npm --prefix client run start"
+  },
+  "dependencies": {
+    "@google/stitch-sdk": "^0.3.5"
+  }
+}

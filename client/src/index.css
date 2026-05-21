@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* Style defaults for Drishti HUD Dashboard */
+:root {
+  --neon-cyan: #00ffff;
+  --neon-red: #ff3131;
+  --neon-green: #39ff14;
+  --neon-orange: #ff914d;
+}
+
+@theme {
+  --font-sans: "Geist", "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom Tactical Animations */
+@keyframes crt-flicker {
+  0% { opacity: 0.985; }
+  50% { opacity: 0.995; }
+  100% { opacity: 0.985; }
+}
+
+@keyframes scanline-anim {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes radar-sweep-anim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes threat-pulse-glow {
+  0% { box-shadow: 0 0 4px rgba(255, 49, 49, 0.4); border-color: rgba(255, 49, 49, 0.5); }
+  50% { box-shadow: 0 0 16px rgba(255, 49, 49, 0.85); border-color: rgba(255, 49, 49, 1); }
+  100% { box-shadow: 0 0 4px rgba(255, 49, 49, 0.4); border-color: rgba(255, 49, 49, 0.5); }
+}
+
+@keyframes laser-sweep {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+/* Custom Helper Utilities */
+.crt-screen {
+  animation: crt-flicker 0.15s infinite;
+  background-image: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
+    linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
+  background-size: 100% 4px, 3px 100%;
+}
+
+.crt-scanline::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(to bottom, rgba(57, 255, 20, 0) 0%, rgba(57, 255, 20, 0.08) 10%, rgba(57, 255, 20, 0) 20%);
+  animation: scanline-anim 6s linear infinite;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.radar-fade-sweep {
+  background: conic-gradient(from 0deg, transparent 40%, rgba(57, 255, 20, 0.35) 90%, rgba(57, 255, 20, 0.7) 100%);
+  animation: radar-sweep-anim 4s linear infinite;
+}
+
+.glass-slate-panel {
+  background: rgba(24, 24, 28, 0.72);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-slate-alert {
+  border-left: 4px solid var(--neon-red);
+  background: rgba(255, 49, 49, 0.03);
+}
+
+.neon-border-cyan {
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+}
+
+.neon-border-red {
+  border: 1px solid var(--neon-red);
+  box-shadow: 0 0 10px rgba(255, 49, 49, 0.25);
+}
+
+.neon-border-green {
+  border: 1px solid var(--neon-green);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.25);
+}
+
+.pulsing-threat-border {
+  animation: threat-pulse-glow 1.8s infinite ease-in-out;
+}
+
+.interactive-hologram {
+  background: linear-gradient(45deg, rgba(57, 255, 20, 0.08), transparent);
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+  text-shadow: 0 0 6px var(--neon-green);
+  transition: all 0.25s ease;
+}
+
+.interactive-hologram:hover {
+  background: rgba(57, 255, 20, 0.2);
+  box-shadow: 0 0 18px rgba(57, 255, 20, 0.4);
+}
+
+.military-grid {
+  background-color: #030612;
+  background-image: 
+    linear-gradient(rgba(57, 255, 20, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 20, 0.04) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.8), 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.glow-text-green {
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.8), 0 0 15px rgba(57, 255, 20, 0.5);
+}
+
+.glow-text-red {
+  text-shadow: 0 0 8px rgba(255, 49, 49, 0.8), 0 0 15px rgba(255, 49, 49, 0.5);
+}
+
+.laser-scanner-line {
+  height: 2px;
+  width: 100%;
+  position: absolute;
+  background: linear-gradient(to right, transparent, var(--neon-cyan), transparent);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  animation: laser-sweep 3.5s infinite linear;
+  pointer-events: none;
+}

@@ -1,0 +1,7 @@
+model: yolov8n.pt
+imgsz: 640
+epochs: 50
+batch: 16
+confidence_threshold: 0.35
+iou_threshold: 0.45
+

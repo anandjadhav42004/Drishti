@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drishti"
+version = "0.1.0"
+description = "YOLOv8 weapon/person detection pipeline with Streamlit dashboard."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "albumentations>=1.4.0",
+  "matplotlib>=3.8.0",
+  "numpy>=1.24.0",
+  "opencv-python>=4.9.0",
+  "pandas>=2.0.0",
+  "pillow>=10.0.0",
+  "requests>=2.31.0",
+  "roboflow>=1.1.0",
+  "streamlit>=1.35.0",
+  "torch>=2.1.0",
+  "torchvision>=0.16.0",
+  "ultralytics>=8.2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,6 @@
+{
+  "name": "DRISHTI",
+  "description": "Deep Learning based Real-time Intelligent Surveillance and Threat Identification terminal featuring live video simulations, interactive object-threat analysis via Gemini AI, and multiple military/tactical HUD themes.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
