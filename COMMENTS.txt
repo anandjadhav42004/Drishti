@@ -1,0 +1,4 @@
+Excellent implementation of real-time surveillance and detection features.
+Great integration of AI, computer vision, and automation.
+Professional UI and well-structured workflow.
+Strong use of Python, OpenCV, and deep learning.
