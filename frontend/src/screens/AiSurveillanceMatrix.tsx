@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useGlobalState } from '../GlobalState';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -6,6 +6,59 @@ export function AiSurveillanceMatrix() {
   const { addToast, setLockdown, openModal } = useGlobalState();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  const captureAndAnalyze = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    // Draw the current video frame on canvas
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageBase64 = canvas.toDataURL('image/jpeg');
+    
+    setAnalyzing(true);
+    setAnalysisError(null);
+    addToast('Initiating neural threat scanning...', 'info');
+    
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: imageBase64,
+          threshold: 0.4
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Server diagnostics returned bad state.');
+      }
+      
+      const data = await response.json();
+      setAnalysisResult(data);
+      
+      if (data.threat_found) {
+        addToast(`Alert! Target identified: ${data.threat_level}`, 'error');
+      } else {
+        addToast('No high-severity threats detected.', 'success');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setAnalysisError(err.message);
+      addToast('Neural scan failed: ' + err.message, 'error');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   useEffect(() => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -86,6 +139,7 @@ export function AiSurveillanceMatrix() {
 
 <div className="col-span-12 lg:col-span-8 row-span-4 relative group overflow-hidden border border-outline-variant/30 bg-black shadow-inner ring-1 ring-white/5">
 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-all duration-[10s] group-hover:scale-[1.02]" />
+<canvas ref={canvasRef} className="hidden" />
 
 <div className="absolute inset-0 pointer-events-none glitch-overlay opacity-40"></div>
 <div className="ai-scanner"></div>
@@ -97,19 +151,51 @@ export function AiSurveillanceMatrix() {
 </div>
 
 
-<div className="absolute top-[20%] left-[35%] w-[12%] h-[40%] border-[0.5px] border-primary-fixed-dim/80 shadow-[0_0_12px_rgba(0,227,138,0.3)] ring-1 ring-primary-fixed-dim/20">
-<div className="absolute -top-6 left-0 bg-primary-fixed-dim/90 text-on-primary-fixed font-body-lg text-[9px] px-2 py-0.5 whitespace-nowrap rounded-t-sm shadow-lg font-bold tracking-tight">
-    PERSON: 98.4% [TARGET_01]
-</div>
-<div className="absolute inset-0 bg-primary-fixed-dim/5"></div>
-</div>
+            {/* Real Gemini/CV Object Detection Bounding Boxes */}
+            {analysisResult && analysisResult.detections && analysisResult.detections.map((box: any, index: number) => {
+              const isWeapon = box.label.toLowerCase().includes('weapon') || box.label.toLowerCase().includes('alert');
+              return (
+                <div
+                  key={index}
+                  style={{
+                    left: `${box.x}%`,
+                    top: `${box.y}%`,
+                    width: `${box.w}%`,
+                    height: `${box.h}%`
+                  }}
+                  className={`absolute border-2 rounded-sm z-50 ${
+                    isWeapon ? 'border-neon-red pulsing-threat-border shadow-[0_0_15px_rgba(255,49,49,0.5)]' : 'border-primary-fixed-dim shadow-[0_0_10px_rgba(0,227,138,0.3)]'
+                  }`}
+                >
+                  <div className={`absolute -top-6 left-0 px-1.5 py-0.5 font-mono text-[9px] uppercase font-bold tracking-widest ${
+                    isWeapon ? 'bg-[#c7041a] text-white font-bold' : 'bg-primary-fixed-dim text-black font-semibold'
+                  }`}>
+                    {box.label} [{(box.confidence * 100).toFixed(0)}%]
+                  </div>
+                  <div className={`absolute -bottom-1 -right-1 w-2 h-2 border-b-2 border-r-2 ${isWeapon ? 'border-neon-red' : 'border-primary-fixed-dim'}`}></div>
+                  <div className={`absolute -top-1 -left-1 w-2 h-2 border-t-2 border-l-2 ${isWeapon ? 'border-neon-red' : 'border-primary-fixed-dim'}`}></div>
+                </div>
+              );
+            })}
 
-<div className="absolute bottom-[15%] right-[25%] w-[25%] h-[20%] border-[0.5px] border-secondary-fixed-dim/80 shadow-[0_0_12px_rgba(0,218,243,0.3)] ring-1 ring-secondary-fixed-dim/20">
-<div className="absolute -top-6 left-0 bg-secondary-fixed-dim/90 text-on-secondary-fixed font-body-lg text-[9px] px-2 py-0.5 whitespace-nowrap rounded-t-sm shadow-lg font-bold tracking-tight">
-    VEHICLE: 92.1% [MOBILE_UNIT_04]
-</div>
-<div className="absolute inset-0 bg-secondary-fixed-dim/5"></div>
-</div>
+            {/* Static hardcoded fallback targets (rendered only when no real analysis has run) */}
+            {!analysisResult && (
+              <>
+                <div className="absolute top-[20%] left-[35%] w-[12%] h-[40%] border-[0.5px] border-primary-fixed-dim/80 shadow-[0_0_12px_rgba(0,227,138,0.3)] ring-1 ring-primary-fixed-dim/20">
+                  <div className="absolute -top-6 left-0 bg-primary-fixed-dim/90 text-on-primary-fixed font-body-lg text-[9px] px-2 py-0.5 whitespace-nowrap rounded-t-sm shadow-lg font-bold tracking-tight">
+                      PERSON: 98.4% [TARGET_01]
+                  </div>
+                  <div className="absolute inset-0 bg-primary-fixed-dim/5"></div>
+                </div>
+
+                <div className="absolute bottom-[15%] right-[25%] w-[25%] h-[20%] border-[0.5px] border-secondary-fixed-dim/80 shadow-[0_0_12px_rgba(0,218,243,0.3)] ring-1 ring-secondary-fixed-dim/20">
+                  <div className="absolute -top-6 left-0 bg-secondary-fixed-dim/90 text-on-secondary-fixed font-body-lg text-[9px] px-2 py-0.5 whitespace-nowrap rounded-t-sm shadow-lg font-bold tracking-tight">
+                      VEHICLE: 92.1% [MOBILE_UNIT_04]
+                  </div>
+                  <div className="absolute inset-0 bg-secondary-fixed-dim/5"></div>
+                </div>
+              </>
+            )}
 
 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 <div className="w-64 h-64 border border-white/5 rounded-full flex items-center justify-center relative">
@@ -138,9 +224,40 @@ export function AiSurveillanceMatrix() {
 <span className="font-data-mono text-[9px] text-on-surface-variant font-bold tracking-widest opacity-80">CAM_01_FEED</span>
 <span className="font-headline-lg text-headline-md text-primary-fixed tracking-tight uppercase drop-shadow-[0_0_10px_rgba(243,255,243,0.3)]">North_Plaza_Main</span>
 </div>
-<div className="flex gap-1">
+<div className="flex gap-2">
 <span className="bg-black/60 text-on-surface font-data-mono text-[9px] px-3 py-1.5 border border-white/10 rounded backdrop-blur-md">ZOOM: 4.5X</span>
 <span className="bg-black/60 text-on-surface font-data-mono text-[9px] px-3 py-1.5 border border-white/10 rounded backdrop-blur-md">IRIS: F1.8</span>
+
+<button
+  onClick={captureAndAnalyze}
+  disabled={analyzing}
+  className={`px-3 py-1.5 font-data-mono text-[9px] font-bold rounded border cursor-pointer pointer-events-auto transition-all uppercase flex items-center gap-1.5 ${
+    analyzing
+      ? 'bg-white/10 text-white/50 border-white/10'
+      : 'bg-primary-fixed-dim/20 text-primary-fixed-dim border-primary-fixed-dim/40 hover:bg-primary-fixed-dim hover:text-black hover:scale-[1.02]'
+  }`}
+>
+  {analyzing ? (
+    <>
+      <span className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+      SCANNING FEED...
+    </>
+  ) : (
+    <>
+      <span className="material-symbols-outlined text-[12px] block">center_focus_strong</span>
+      SCAN LIVE FEED
+    </>
+  )}
+</button>
+
+{analysisResult && (
+  <button
+    onClick={() => setAnalysisResult(null)}
+    className="px-3 py-1.5 bg-[#220d0f]/60 hover:bg-[#220d0f] text-[#ffb4ab] font-data-mono text-[9px] rounded border border-error/30 cursor-pointer pointer-events-auto transition-all"
+  >
+    RESET SCAN
+  </button>
+)}
 </div>
 </div>
 </div>
